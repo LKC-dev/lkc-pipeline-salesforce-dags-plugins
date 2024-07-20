@@ -1,0 +1,155 @@
+bucket_name: "datalake-raw-data"
+file_key: "salesforce/2024_01_01_16h_salesforce_account.json"
+
+rename_columns: {
+    "Id": "id",
+    "IsDeleted": "is_deleted",
+    "LastName": "last_name",
+    "Name": "name",
+    "RecordTypeId": "record_type_id",
+    "Company": "company",
+    "Phone": "phone",
+    "MobilePhone": "mobile_phone",
+    "Email": "email",
+    "PhotoUrl": "photo_url",
+    "Description": "description",
+    "LeadSource": "lead_source",
+    "Status": "status",
+    "NumberOfEmployees": "number_employees",
+    "OwnerId": "owner_id",
+    "IsConverted": "is_converted",
+    "IsUnreadByOwner": "is_unread_by_owner",
+    "CreatedDate": "created_date",
+    "CreatedById": "created_by_id",
+    "LastModifiedById": "last_modified_by_id",
+    "SystemModstamp": "system_mod_stamp",
+    "LastActivityDate": "last_activity_date",
+    "FirstCallDateTime": "first_call_datetime",
+    "FirstEmailDateTime": "first_email_datetime",
+    "ActivityMetricId": "activity_metric_id"
+  }
+
+table_schema: {
+  "id": "str",
+  "is_deleted": "bool",
+  "last_name": "str",
+  "name": "str",
+  "record_type_id": "str",
+  "company": "str",
+  "phone": "str",
+  "mobile_phone": "str",
+  "email": "str",
+  "photo_url": "str",
+  "description": "str",
+  "lead_source": "str",
+  "status": "str",
+  "number_employees", "int",
+  "owner_id": "str",
+  "is_converted": "bool",
+  "is_unread_by_owner": "bool",
+  "created_date": "datetime",
+  "created_by_id": "str",
+  "last_modified_by_id": "str",
+  "system_mod_stamp": "datetime",
+  "last_activity_date": "datetime",
+  "first_call_datetime": "datetime",
+  "first_email_datetime": "datetime",
+  "activity_metric_id": "str"
+ }
+ 
+silver_schema: "silver"
+
+silver_table_name: "salesforce_accounts"
+
+silver_create_schema: "CREATE SCHEMA IF NOT EXISTS silver;"
+
+silver_create_table: "CREATE TABLE IF NOT EXISTS silver.salesforce_accounts (
+    id VARCHAR,
+    is_deleted VARCHAR,
+    last_name VARCHAR,
+    name VARCHAR,
+    record_type_id VARCHAR,
+    company VARCHAR,
+    phone VARCHAR,
+    mobile_phone VARCHAR,
+    email VARCHAR,
+    photo_url VARCHAR,
+    description VARCHAR,
+    lead_source VARCHAR,
+    status VARCHAR,
+    number_employees INT,
+    owner_id VARCHAR,
+    is_converted BOOLEAN,
+    is_unread_by_owner BOOLEAN,
+    created_date TIMESTAMP,
+    created_by_id VARCHAR,
+    last_modified_by_id VARCHAR,
+    system_mod_stamp TIMESTAMP,
+    last_activity_date TIMESTAMP,
+    first_call_datetime TIMESTAMP,
+    first_email_datetime TIMESTAMP,
+    activity_metric_id VARCHAR,
+    inserted_at TIMESTAMP);"
+
+silver_deduplication_query: "WITH cte AS (
+                SELECT
+                    id, 
+                    MAX(inserted_at) AS max_date
+                FROM
+                    silver.salesforce_accounts
+                GROUP BY
+                    id
+                )
+                DELETE FROM silver.salesforce_accounts t USING cte
+                WHERE 
+                        t.id = cte.id
+                    AND t.inserted_at <> max_date;"
+
+gold_schema: "gold"
+
+gold_table_name: "dim_accounts"
+
+gold_create_schema: "CREATE SCHEMA IF NOT EXISTS gold;"
+
+gold_create_table: "CREATE TABLE IF NOT EXISTS gold.dim_accounts (
+    id VARCHAR,
+    is_deleted VARCHAR,
+    last_name VARCHAR,
+    name VARCHAR,
+    record_type_id VARCHAR,
+    company VARCHAR,
+    phone VARCHAR,
+    mobile_phone VARCHAR,
+    email VARCHAR,
+    photo_url VARCHAR,
+    description VARCHAR,
+    lead_source VARCHAR,
+    status VARCHAR,
+    number_employees INT,
+    owner_id VARCHAR,
+    is_converted BOOLEAN,
+    is_unread_by_owner BOOLEAN,
+    created_date TIMESTAMP,
+    created_by_id VARCHAR,
+    last_modified_by_id VARCHAR,
+    system_mod_stamp TIMESTAMP,
+    last_activity_date TIMESTAMP,
+    first_call_datetime TIMESTAMP,
+    first_email_datetime TIMESTAMP,
+    activity_metric_id VARCHAR,
+    inserted_at TIMESTAMP
+);"
+
+gold_deduplication_query: "WITH cte AS (
+                SELECT
+                    id, 
+                    MAX(inserted_at) AS max_date
+                FROM
+                    gold.dim_accounts
+                GROUP BY
+                    id
+                )
+                DELETE FROM gold.dim_accounts t USING cte
+                WHERE 
+                        t.id = cte.id
+                    AND t.inserted_at <> max_date;"
